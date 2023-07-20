@@ -159,3 +159,7 @@ venv/
 
 # Ignore glasswercss/gwcss_env
 glasswercss/gwcss_env
+
+# Ignore pytotext
+directory_structure.txt
+output.txt
