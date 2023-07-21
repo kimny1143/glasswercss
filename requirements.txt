@@ -1,7 +1,7 @@
-opencv-python>=4.2
-scikit-image>=0.16
-numpy>=1.18
-openai>=0.2.1
-tensorflow==2.13.0
-tf-models-official==2.13.0
-
+opencv-python>=4.5.3
+scikit-image>=0.18.3
+numpy>=1.21.2
+openai>=0.27.0
+torch>=2.0.1
+torchvision>=0.11.1
+torchaudio>=0.10.1

@@ -158,15 +158,10 @@ venv/
 *.pyc
 
 # Ignore glasswercss/gwcss_env
-glasswercss/gwcss_env
+gwcss_env/
 
 # Ignore pytotext
 directory_structure.txt
 output.txt
 
-# Tensorflow models
-glasswercss/models/
-
-# Docker
-.dockerfile
-models/
+# Ignore .DS_Store
