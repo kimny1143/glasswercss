@@ -163,3 +163,9 @@ glasswercss/gwcss_env
 # Ignore pytotext
 directory_structure.txt
 output.txt
+
+# Tensorflow models
+glasswercss/models/
+
+# Docker
+.dockerfile

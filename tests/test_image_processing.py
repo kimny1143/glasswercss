@@ -8,7 +8,7 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # 親ディレクトリをモジュールの検索パスに追加
 sys.path.append(parent_dir)
 
-from src.image_processing.image_to_css import image_to_css
+from image_processing.image_to_css import image_to_css
 
 class TestImageProcessing(unittest.TestCase):
     def test_image_to_css(self):
