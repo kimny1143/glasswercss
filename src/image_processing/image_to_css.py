@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
-import tensorflow as tf
 import torch
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
+from torchvision.transforms import functional as F
 
 # Load the Faster R-CNN model
 model = fasterrcnn_resnet50_fpn(pretrained=True)
@@ -10,25 +10,20 @@ model = fasterrcnn_resnet50_fpn(pretrained=True)
 def detect_elements(image):
     # Convert the image to the format expected by the model
     image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-    image = torch.from_numpy(image).permute(2, 0, 1)
+    image = F.to_tensor(image)  # Convert the image to a PyTorch tensor
+    image = image.unsqueeze(0)  # Add an extra dimension for the batch
 
     # Use the model to detect elements in the image
-    model.eval()
+    model.eval()  # Ensure the model is in evaluation mode
     with torch.no_grad():
-        prediction = model([image])
+        result = model(image)
 
-    # Extract the bounding boxes and labels from the result
-    bounding_boxes = prediction[0]['boxes']
-    labels = prediction[0]['labels']
+    # Put the model back into training mode if necessary
+    model.train()
 
-    # Convert the labels to a more human-readable format
-    # This will depend on the specific model and dataset used
-    labels = convert_labels(labels)
+    # Extract the bounding
 
-    # Return a list of detected elements, each represented as a bounding box and a label
-    elements = list(zip(bounding_boxes, labels))
 
-    return elements
 
 def preprocess_image(image, size=(800, 800)):
     # Resize the image to the desired size
@@ -40,31 +35,13 @@ def preprocess_image(image, size=(800, 800)):
     # Normalize the pixel values to the range [0, 1]
     image = image / 255.0
 
+    # Convert the image back to uint8
+    image = (image * 255).astype(np.uint8)
+
     # Add an extra dimension to the image
     image = np.expand_dims(image, axis=2)
 
     return image
-
-def detect_elements(image):
-    # Convert the image to the format expected by the model
-    image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-    image = tf.image.convert_image_dtype(image, tf.float32)[tf.newaxis, ...]
-
-    # Use the model to detect elements in the image
-    result = model(image)
-
-    # Extract the bounding boxes and labels from the result
-    bounding_boxes = result['detection_boxes']
-    labels = result['detection_classes']
-
-    # Convert the labels to a more human-readable format
-    # This will depend on the specific model and dataset used
-    labels = convert_labels(labels)
-
-    # Return a list of detected elements, each represented as a bounding box and a label
-    elements = list(zip(bounding_boxes, labels))
-
-    return elements
 
 def convert_labels(labels):
     # Define a mapping from integers to element names
@@ -232,6 +209,8 @@ def image_to_css(image_path):
     # Preprocess the image
     preprocessed_image = preprocess_image(image)
 
+    print("Image depth in image_to_css:", preprocessed_image.dtype)
+    
     # Detect elements in the image
     elements = detect_elements(preprocessed_image)
 
