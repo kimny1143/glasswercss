@@ -6,6 +6,10 @@ from torchvision.transforms import functional as F
 
 # Load the Faster R-CNN model
 model = fasterrcnn_resnet50_fpn(pretrained=True)
+model.eval()
+
+# Load the classification model
+classification_model = load.classification_model() # Define this function
 
 def detect_elements(image):
     # Convert the image to the format expected by the model
@@ -14,16 +18,20 @@ def detect_elements(image):
     image = image.unsqueeze(0)  # Add an extra dimension for the batch
 
     # Use the model to detect elements in the image
-    model.eval()  # Ensure the model is in evaluation mode
     with torch.no_grad():
         result = model(image)
 
-    # Put the model back into training mode if necessary
-    model.train()
+    # Extract the bounding boxes and labels from the result
+    bounding_boxes = result[0]['boxes']
+    labels = result[0]['labels']
 
-    # Extract the bounding
+    # Convert the labels to a more human-readable format
+    labels = convert_labels(labels)
 
+    # Return a list of detected elements, each represented as a bounding box and a label
+    elements = list(zip(bounding_boxes, labels))
 
+    return elements
 
 def preprocess_image(image, size=(800, 800)):
     # Resize the image to the desired size
@@ -58,8 +66,6 @@ def convert_labels(labels):
 
     return labels
 
-
-
 def classify_elements(image, elements):
     element_types = []
 
@@ -75,15 +81,12 @@ def classify_elements(image, elements):
         element_image = preprocess_element_image(element_image)
 
         # Use the model to classify the type of the element
-        element_type = model.predict(element_image)
+        element_type = classification_model.predict(element_image)
 
         # Append the element type to the list
         element_types.append(element_type)
 
     return element_types
-
-import cv2
-import numpy as np
 
 def preprocess_element_image(element_image, size=(64, 64)):
     # Resize the image to the desired size
@@ -100,7 +103,6 @@ def preprocess_element_image(element_image, size=(64, 64)):
     element_image = np.expand_dims(element_image, axis=2)
 
     return element_image
-
 
 def generate_css(elements, element_types):
     css = ""
@@ -205,17 +207,17 @@ def generate_image_css(bounding_box, label):
 def image_to_css(image_path):
     # Read the image
     image = cv2.imread(image_path)
+    if image is None:
+        raise ValueError(f"Could not read image at path {image_path}")
 
-    # Preprocess the image
-    preprocessed_image = preprocess_image(image)
-
-    print("Image depth in image_to_css:", preprocessed_image.dtype)
-    
     # Detect elements in the image
-    elements = detect_elements(preprocessed_image)
+    elements = detect_elements(image)
+
+    if not elements:
+        raise ValueError("No elements detected in the image")
 
     # Classify the type of each element
-    element_types = classify_elements(preprocessed_image, elements)
+    element_types = classify_elements(image, elements)
 
     # Generate the corresponding CSS
     css = generate_css(elements, element_types)
