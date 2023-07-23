@@ -69,6 +69,9 @@ def convert_labels(labels):
         3: 'list',
         4: 'table',
         5: 'figure',
+        6: 'button',  # ボタンのラベルを追加
+        7: 'text field',  # テキストフィールドのラベルを追加
+        8: 'image',  # 画像のラベルを追加
     }
     labels = [label_mapping.get(label, 'unknown') for label in labels]
     return labels
@@ -232,6 +235,7 @@ def image_to_css(image_path):
 
     # Detect elements in the image
     elements = detect_elements(image)
+    print(f"Detected elements: {elements}")  # Debugging print statement
 
     if not elements:
         raise ValueError("No elements detected in the image")
@@ -241,6 +245,7 @@ def image_to_css(image_path):
 
     # Classify the type of each element
     element_types = classify_elements(image, elements, classification_model)
+    print(f"Element types: {element_types}")  # Debugging print statement
 
     # Generate the corresponding CSS
     css = generate_css(elements, element_types)
