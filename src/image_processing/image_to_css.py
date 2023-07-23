@@ -8,12 +8,22 @@ from torchvision.transforms import functional as F
 model = fasterrcnn_resnet50_fpn(pretrained=True)
 model.eval()
 
-# Load the classification model
-classification_model = load.classification_model() # Define this function
+import torchvision.models as models
+
+def load_classification_model():
+    # Load a pre-trained ResNet model
+    model = models.resnet50(pretrained=True)
+
+    # Set the model to evaluation mode
+    model.eval()
+
+    return model
 
 def detect_elements(image):
-    # Convert the image to the format expected by the model
-    image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    # Check if the image is grayscale
+    if len(image.shape) == 2 or image.shape[2] == 1:
+        # Convert the image to the format expected by the model
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
     image = F.to_tensor(image)  # Convert the image to a PyTorch tensor
     image = image.unsqueeze(0)  # Add an extra dimension for the batch
 
@@ -52,38 +62,44 @@ def preprocess_image(image, size=(800, 800)):
     return image
 
 def convert_labels(labels):
-    # Define a mapping from integers to element names
-    # This will depend on the specific model and dataset used
     label_mapping = {
-        1: 'button',
-        2: 'text field',
-        3: 'image',
-        # Add more mappings as needed
+        0: 'background',
+        1: 'text',
+        2: 'title',
+        3: 'list',
+        4: 'table',
+        5: 'figure',
     }
-
-    # Convert the labels to element names using the mapping
-    labels = [label_mapping[label] for label in labels]
-
+    labels = [label_mapping.get(label, 'unknown') for label in labels]
     return labels
 
-def classify_elements(image, elements):
+def classify_elements(image, elements, classification_model):
     element_types = []
 
     for element in elements:
         # Extract the bounding box and label from the element
         bounding_box, label = element
 
+        # Convert the bounding box coordinates to integers
+        x1, y1, x2, y2 = map(int, bounding_box)
+
         # Extract the corresponding part of the image
-        x1, y1, x2, y2 = bounding_box
         element_image = image[y1:y2, x1:x2]
 
         # Preprocess the element image
         element_image = preprocess_element_image(element_image)
 
-        # Use the model to classify the type of the element
-        element_type = classification_model.predict(element_image)
+        # Convert the image to a PyTorch tensor
+        element_image = torch.from_numpy(element_image).permute(2, 0, 1).float().unsqueeze(0)
 
-        # Append the element type to the list
+        # Use the model to classify the type of the element
+        output = classification_model(element_image)
+
+        # Get the probabilities and find the class with the highest probability
+        probabilities = torch.nn.functional.softmax(output[0], dim=0)
+        element_type = probabilities.argmax().item()
+
+        # Add the element type to the list
         element_types.append(element_type)
 
     return element_types
@@ -93,14 +109,20 @@ def preprocess_element_image(element_image, size=(64, 64)):
     element_image = cv2.resize(element_image, size)
 
     # If the image is not grayscale, convert it to grayscale
-    if element_image.shape[2] != 1:
+    if len(element_image.shape) == 3 and element_image.shape[2] != 1:
         element_image = cv2.cvtColor(element_image, cv2.COLOR_RGB2GRAY)
 
     # Normalize the pixel values to the range [0, 1]
     element_image = element_image / 255.0
 
-    # Add an extra dimension to the image
-    element_image = np.expand_dims(element_image, axis=2)
+    # Convert the image back to 8-bit depth
+    element_image = (element_image * 255).astype(np.uint8)
+
+    # Convert the image to RGB
+    element_image = cv2.cvtColor(element_image, cv2.COLOR_GRAY2RGB)
+
+    # Normalize the pixel values to the range [0, 1] again
+    element_image = element_image / 255.0
 
     return element_image
 
@@ -181,7 +203,6 @@ def generate_text_field_css(bounding_box, label):
 
     return css
 
-
 def generate_image_css(bounding_box, label):
     # Extract the coordinates of the bounding box
     x1, y1, x2, y2 = bounding_box
@@ -203,7 +224,6 @@ def generate_image_css(bounding_box, label):
 
     return css
 
-
 def image_to_css(image_path):
     # Read the image
     image = cv2.imread(image_path)
@@ -216,8 +236,11 @@ def image_to_css(image_path):
     if not elements:
         raise ValueError("No elements detected in the image")
 
+    # Load the classification model
+    classification_model = load_classification_model()
+
     # Classify the type of each element
-    element_types = classify_elements(image, elements)
+    element_types = classify_elements(image, elements, classification_model)
 
     # Generate the corresponding CSS
     css = generate_css(elements, element_types)

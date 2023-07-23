@@ -7,4 +7,6 @@ def main(image_path):
     print(css)
 
 if __name__ == "__main__":
-    main("path_to_image")
+    image_path = "../tests/mockup/Signup.png"
+    css = image_to_css(image_path)
+    print(css)
