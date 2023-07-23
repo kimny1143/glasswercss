@@ -9,7 +9,7 @@ print(os.getcwd())
 # Add the src directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src'))
 
-from image_processing.image_to_css import image_to_css
+from src.image_processing.image_to_css import image_to_css
 
 class TestImageProcessing(unittest.TestCase):
     def test_image_to_css(self):
