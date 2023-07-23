@@ -165,3 +165,4 @@ directory_structure.txt
 output.txt
 
 # Ignore .DS_Store
+.DS_Store
