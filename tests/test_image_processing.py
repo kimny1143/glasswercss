@@ -19,7 +19,7 @@ from src.image_processing.image_to_css import image_to_css
 class TestImageProcessing(unittest.TestCase):
     def test_image_to_css(self):
         # Define the path to a test image
-        test_image_path = 'tests/mockup/Signup.png'
+        test_image_path = 'mockup/Signup.png'
 
         # Check if the image file exists
         self.assertTrue(os.path.exists(test_image_path), "Image file does not exist")
