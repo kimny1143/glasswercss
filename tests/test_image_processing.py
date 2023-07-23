@@ -3,17 +3,19 @@ import sys
 import unittest
 import cv2
 import numpy as np
+import sys
 
 # Change the working directory to the directory where the script is located
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 print(os.getcwd())
 
-# Add the src directory to the Python path
-sys.path.append(os.path.join(os.getcwd(), 'src'))
+# プロジェクトのルートディレクトリをPythonのパスに追加
+sys.path.append('/content/drive/MyDrive/glasswercss')
 
-from image_processing.image_to_css import image_to_css
 
+# from image_processing.image_to_css import image_to_css
+from src.image_processing.image_to_css import image_to_css
 class TestImageProcessing(unittest.TestCase):
     def test_image_to_css(self):
         # Define the path to a test image
